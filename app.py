@@ -5,6 +5,7 @@ import re
 import tensorflow as tf
 import numpy as np
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
@@ -49,6 +50,14 @@ class In(BaseModel):
     text: str
 
 app = FastAPI(title="Toxicity Scoring API")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],            # in production, lock this down to your domain
+    allow_credentials=True,
+    allow_methods=["*"],            # includes OPTIONS, POST, etc.
+    allow_headers=["*"],
+)
 
 @app.post("/score")
 def score_endpoint(req: In):
