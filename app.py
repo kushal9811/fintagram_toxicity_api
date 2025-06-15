@@ -1,4 +1,6 @@
 # app.py
+
+# 1) Imports
 import re
 import tensorflow as tf
 import numpy as np
@@ -7,12 +9,6 @@ from pydantic import BaseModel
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
-import nltk
-
-# 1) NLTK downloads (at startup)
-nltk.download('punkt')
-nltk.download('stopwords')
-nltk.download('wordnet')
 
 # 2) Preprocessing setup
 lemmatizer = WordNetLemmatizer()

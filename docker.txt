@@ -11,3 +11,7 @@ docker ps - to list all running container
 docker tag toxicity-api:latest kushl88/toxicity-api:latest
 
 docker push kushal88/toxicity-api:latest
+
+docker pull kushal88/toxicity-api:latest
+
+docker run -p 8000:8000 kushal88/toxicity-api:latest
