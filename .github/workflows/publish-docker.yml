@@ -1,0 +1,37 @@
+name: CI & CD
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # 🛠️ Build the Docker image
+      - name: Build Docker image
+        run: |
+          docker build -t kushal88/toxicity-api:latest .
+
+      # ✅ Smoke test (basic API check)
+      - name: Smoke test
+        run: |
+          docker run -d --rm -p 8000:8000 --name tox-test kushal88/toxicity-api:latest
+          sleep 10
+          curl -f -X POST http://localhost:8000/score \
+            -H "Content-Type: application/json" \
+            -d '{"text": "You suck!"}'
+          docker stop tox-test
+
+      # 🔐 Log in to Docker Hub
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      # 📦 Push to Docker Hub
+      - name: Push image
+        run: docker push kushal88/toxicity-api:latest
