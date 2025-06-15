@@ -1,3 +1,30 @@
-/.ipynb_checkpoints
-/flagged
-/toxic
+# 1) Python virtual environments
+tox-env/
+venv/
+ENV/
+env/
+
+# 2) Byte‑compiled / cache files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# 3) VS Code settings
+.vscode/
+.DS_Store
+
+# 4) Logs, SQLite, etc.
+*.log
+*.sqlite3
+
+# 5) IDE or Editor folders/files
+*.idea/
+*.sublime-project
+*.sublime-workspace
+
+# 6) OS generated files
+Thumbs.db
+desktop.ini
+
+# 7) NLTK download cache
+nltk_data/

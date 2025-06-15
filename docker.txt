@@ -7,3 +7,7 @@ curl -X POST http://127.0.0.1:8000/score -H "Content-Type: application/json" -d 
 docker stop tox-test - to stop a container
 
 docker ps - to list all running container
+
+docker tag toxicity-api:latest kushl88/toxicity-api:latest
+
+docker push kushal88/toxicity-api:latest
