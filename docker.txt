@@ -1,0 +1,9 @@
+docker build -t toxicity-api:latest .
+
+docker run -d --rm -p 8000:8000 --name tox-test toxicity-api:latest - to run a container
+
+curl -X POST http://127.0.0.1:8000/score -H "Content-Type: application/json" -d "{\"text\":\"You freaking suck! I am going to hit you.\"}"
+
+docker stop tox-test - to stop a container
+
+docker ps - to list all running container
