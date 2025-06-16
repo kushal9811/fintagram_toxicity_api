@@ -2,10 +2,10 @@ FROM python:3.10-slim
 
 WORKDIR /app
 
-# 1) Install numpy <2 and tflite‐runtime
+# 1) Install numpy <2 and full TensorFlow (for TFLite support)
 RUN pip install --no-cache-dir \
       "numpy<2" \
-      "tflite-runtime==2.13.0"
+      "tensorflow==2.13.1"
 
 # 2) Install your other Python deps
 COPY requirements.txt .
