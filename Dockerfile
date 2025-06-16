@@ -2,12 +2,12 @@ FROM python:3.10-slim
 
 WORKDIR /app
 
-# 1) Install numpy <2 and the latest TF nightly (for up‑to‑date TFLite)
+# 1) Install numpy <2 and the latest TF nightly (bundles Flex delegate)
 RUN pip install --no-cache-dir \
       "numpy<2" \
       "tf-nightly"
 
-# 2) Install your other Python deps
+# 2) Install FastAPI & friends
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
