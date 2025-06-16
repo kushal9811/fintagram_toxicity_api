@@ -15,14 +15,25 @@ jobs:
         run: |
           docker build -t kushal88/toxicity-api:latest .
 
-      # ✅ Smoke test (basic API check)
+      # ✅ Smoke test (basic API check + diagnostics)
       - name: Smoke test
         run: |
+          # 1) Run the container in detached mode
           docker run -d --rm -p 8000:8000 --name tox-test kushal88/toxicity-api:latest
+          # 2) Wait for startup
           sleep 10
+          # 3) Show container status
+          echo "=== CONTAINER STATUS ==="
+          docker ps -a
+          # 4) Dump container logs
+          echo "=== CONTAINER LOGS ==="
+          docker logs tox-test || true
+          # 5) Attempt the actual curl
+          echo "=== CURL TEST ==="
           curl -f -X POST http://localhost:8000/score \
             -H "Content-Type: application/json" \
             -d '{"text": "You suck!"}'
+          # 6) Tear down
           docker stop tox-test
 
       # 🔐 Log in to Docker Hub
