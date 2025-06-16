@@ -21,20 +21,19 @@ vec_in  = vec_interp.get_input_details()[0]["index"]
 vec_out = vec_interp.get_output_details()[0]["index"]
 
 def vectorize(text: str) -> np.ndarray:
-    # TFLite string inputs use dtype=object
     vec_interp.set_tensor(vec_in, np.array([text], dtype=object))
     vec_interp.invoke()
     return vec_interp.get_tensor(vec_out).astype(np.float32)
 
 def score_comment(text: str, threshold: float = 0.5) -> dict:
-    vect = vectorize(text)                # shape (1, seq_len)
+    vect = vectorize(text)
     tox_interp.set_tensor(tox_in, vect)
     tox_interp.invoke()
-    probs = tox_interp.get_tensor(tox_out)[0]  # (6,)
+    probs = tox_interp.get_tensor(tox_out)[0]
 
     result = {}
     for label, p in zip(LABELS, probs):
-        result[label]        = float(p)
+        result[label] = float(p)
         result[f"{label}_flag"] = int(p > threshold)
     return result
 
@@ -44,7 +43,7 @@ class In(BaseModel):
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],    # lock down in prod
+    allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -52,3 +51,10 @@ app.add_middleware(
 @app.post("/score")
 def score_endpoint(req: In):
     return score_comment(req.text)
+
+# ⬇️ Run Uvicorn server on the correct port for Render
+if __name__ == "__main__":
+    import os
+    import uvicorn
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run("app:app", host="0.0.0.0", port=port)
