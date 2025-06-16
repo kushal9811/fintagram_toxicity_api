@@ -2,10 +2,10 @@ FROM python:3.10-slim
 
 WORKDIR /app
 
-# 1) Install numpy <2 and full TensorFlow (for TFLite support)
+# 1) Install numpy <2 and the latest TF nightly (for up‑to‑date TFLite)
 RUN pip install --no-cache-dir \
       "numpy<2" \
-      "tensorflow==2.13.1"
+      "tf-nightly"
 
 # 2) Install your other Python deps
 COPY requirements.txt .
