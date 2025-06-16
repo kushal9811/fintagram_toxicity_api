@@ -2,7 +2,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import numpy as np
-from tensorflow.lite import Interpreter
+import tensorflow as tf           # ← import TF as a module
+
+# Use the TFLite interpreter from TF directly
+Interpreter = tf.lite.Interpreter
 
 LABELS = ["toxic", "severe_toxic", "obscene", "threat", "insult", "identity_hate"]
 
