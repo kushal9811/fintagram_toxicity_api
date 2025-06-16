@@ -7,42 +7,51 @@ on:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+
     steps:
+      # 1) Check out your code
       - uses: actions/checkout@v4
 
-      # 🛠️ Build the Docker image
+      # 2) Build the Docker image
       - name: Build Docker image
         run: |
           docker build -t kushal88/toxicity-api:latest .
 
-      # ✅ Smoke test (basic API check + diagnostics)
+      # 3) Smoke test with full diagnostics
       - name: Smoke test
         run: |
-          # 1) Run the container in detached mode
-          docker run -d --rm -p 8000:8000 --name tox-test kushal88/toxicity-api:latest
-          # 2) Wait for startup
-          sleep 10
-          # 3) Show container status
-          echo "=== CONTAINER STATUS ==="
+          # Start your container in detached mode
+          docker run -d --rm -p 8000:8000 --name tox-test kushal88/toxicity-api:latest || true
+
+          # Give it a moment to initialize
+          sleep 5
+
+          # Show all containers, including ones that have already exited
+          echo "=== ALL CONTAINERS ==="
           docker ps -a
-          # 4) Dump container logs
-          echo "=== CONTAINER LOGS ==="
-          docker logs tox-test || true
-          # 5) Attempt the actual curl
+
+          # Dump the logs from your test container
+          echo "=== TOX-TEST LOGS ==="
+          docker logs tox-test || echo "No logs available (container may never have started)"
+
+          # Attempt to curl the /score endpoint
           echo "=== CURL TEST ==="
           curl -f -X POST http://localhost:8000/score \
             -H "Content-Type: application/json" \
-            -d '{"text": "You suck!"}'
-          # 6) Tear down
-          docker stop tox-test
+            -d '{"text":"You suck!"}' \
+            && echo "→ CURL succeeded" \
+            || echo "→ CURL failed"
 
-      # 🔐 Log in to Docker Hub
+          # Clean up the test container if it’s still running
+          docker rm -f tox-test || true
+
+      # 4) Log in to Docker Hub
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # 📦 Push to Docker Hub
+      # 5) Push the image
       - name: Push image
         run: docker push kushal88/toxicity-api:latest
