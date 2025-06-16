@@ -20,8 +20,8 @@ jobs:
       # 3) Smoke test with full diagnostics
       - name: Smoke test
         run: |
-          # Start your container in detached mode
-          docker run -d --rm -p 8000:8000 --name tox-test kushal88/toxicity-api:latest || true
+          # Start your container in detached mode (fail if it doesn’t start)
+          docker run -d --rm -p 8000:8000 --name tox-test kushal88/toxicity-api:latest
 
           # Give it a moment to initialize
           sleep 5
@@ -32,18 +32,17 @@ jobs:
 
           # Dump the logs from your test container
           echo "=== TOX-TEST LOGS ==="
-          docker logs tox-test || echo "No logs available (container may never have started)"
+          docker logs tox-test
 
           # Attempt to curl the /score endpoint
           echo "=== CURL TEST ==="
           curl -f -X POST http://localhost:8000/score \
             -H "Content-Type: application/json" \
             -d '{"text":"You suck!"}' \
-            && echo "→ CURL succeeded" \
-            || echo "→ CURL failed"
+            && echo "→ CURL succeeded"
 
-          # Clean up the test container if it’s still running
-          docker rm -f tox-test || true
+          # Clean up the test container
+          docker rm -f tox-test
 
       # 4) Log in to Docker Hub
       - name: Log in to Docker Hub
