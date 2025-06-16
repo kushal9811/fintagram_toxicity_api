@@ -17,7 +17,7 @@ jobs:
         run: |
           docker build -t kushal88/toxicity-api:latest .
 
-            - name: Smoke test
+      - name: Smoke test
         run: |
           # 1) Start your container (no --rm so it sticks around on crash)
           docker run -d -p 8000:8000 --name tox-test kushal88/toxicity-api:latest
