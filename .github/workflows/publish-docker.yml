@@ -7,50 +7,31 @@ on:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
-
     steps:
-      # 1) Check out your code
       - uses: actions/checkout@v4
 
-      # 2) Build the Docker image
+      # 🛠️ Build the Docker image
       - name: Build Docker image
         run: |
           docker build -t kushal88/toxicity-api:latest .
 
+      # ✅ Smoke test (basic API check)
       - name: Smoke test
         run: |
-          # 1) Start your container (no --rm so it sticks around on crash)
-          docker run -d -p 8000:8000 --name tox-test kushal88/toxicity-api:latest
-
-          # 2) Give it a moment to initialize (or crash)
-          sleep 5
-
-          # 3) Show all containers (including exited ones)
-          echo "=== ALL CONTAINERS ==="
-          docker ps -a
-
-          # 4) Fetch the logs from the container
-          echo "=== TOX-TEST LOGS ==="
-          docker logs tox-test
-
-          # 5) Attempt to curl the /score endpoint
-          echo "=== CURL TEST ==="
+          docker run -d --rm -p 8000:8000 --name tox-test kushal88/toxicity-api:latest
+          sleep 10
           curl -f -X POST http://localhost:8000/score \
             -H "Content-Type: application/json" \
-            -d '{"text":"You suck!"}' \
-          && echo "→ CURL succeeded" \
-          || echo "→ CURL failed"
+            -d '{"text": "You suck!"}'
+          docker stop tox-test
 
-          # 6) Clean up the test container
-          docker rm tox-test
-
-      # 4) Log in to Docker Hub
+      # 🔐 Log in to Docker Hub
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # 5) Push the image
+      # 📦 Push to Docker Hub
       - name: Push image
         run: docker push kushal88/toxicity-api:latest

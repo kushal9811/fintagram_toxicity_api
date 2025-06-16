@@ -1,62 +1,64 @@
+# app.py
+
+# 1) Imports
+import re
+import tensorflow as tf
+import numpy as np
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-import numpy as np
+from nltk.tokenize import word_tokenize
+from nltk.corpus import stopwords
+from nltk.stem import WordNetLemmatizer
 
-# Import Interpreter and load_delegate from TF Python
-from tensorflow.lite.python.interpreter import Interpreter, load_delegate
+# 2) Preprocessing setup
+lemmatizer = WordNetLemmatizer()
+stop_words = set(stopwords.words("english"))
+LABELS = ["toxic","severe_toxic","obscene","threat","insult","identity_hate"]
 
-LABELS = ["toxic", "severe_toxic", "obscene", "threat", "insult", "identity_hate"]
+# 3) Load the vectorizer and model (SavedModel folders in same dir)
+vectorizer = tf.keras.Sequential([
+    tf.keras.layers.Input(shape=(), dtype=tf.string),
+    tf.keras.layers.TFSMLayer("vectorizer", call_endpoint="serving_default")
+])
+model = tf.keras.Sequential([
+    tf.keras.layers.Input(shape=(1800,), dtype=tf.float32),
+    tf.keras.layers.TFSMLayer("toxicity", call_endpoint="serving_default")
+])
 
-# Path helper
-def make_interp(path: str):
-    return Interpreter(
-        model_path=path,
-        experimental_delegates=[load_delegate("libtensorflowlite_flex.so")]
-    )
-
-# Load TFLite models with Flex delegate
-tox_interp = make_interp("toxicity/toxicity.tflite")
-tox_interp.allocate_tensors()
-tox_in  = tox_interp.get_input_details()[0]["index"]
-tox_out = tox_interp.get_output_details()[0]["index"]
-
-vec_interp = make_interp("vectorizer/vectorizer.tflite")
-vec_interp.allocate_tensors()
-vec_in  = vec_interp.get_input_details()[0]["index"]
-vec_out = vec_interp.get_output_details()[0]["index"]
-
-def vectorize(text: str) -> np.ndarray:
-    vec_interp.set_tensor(vec_in, np.array([text], dtype=object))
-    vec_interp.invoke()
-    return vec_interp.get_tensor(vec_out).astype(np.float32)
-
+# 4) Define your scoring function
 def score_comment(text: str, threshold: float = 0.5) -> dict:
-    vect = vectorize(text)
-    tox_interp.set_tensor(tox_in, vect)
-    tox_interp.invoke()
-    probs = tox_interp.get_tensor(tox_out)[0]
+    # Vectorize and cast
+    vect_dict = vectorizer(tf.constant([text]))
+    vect = tf.cast(vect_dict["text_vectorization"], tf.float32)
 
+    # Direct call to model returns dict
+    output = model(vect, training=False)
+    # Extract the first tensor in the returned dict
+    probs_tensor = list(output.values())[0]
+    probs = probs_tensor.numpy()[0]
+
+    # Build response dict
     result = {}
     for label, p in zip(LABELS, probs):
-        result[label]        = float(p)
+        result[label] = float(p)
         result[f"{label}_flag"] = int(p > threshold)
     return result
 
+# 5) FastAPI wiring
 class In(BaseModel):
     text: str
 
-app = FastAPI()
+app = FastAPI(title="Toxicity Scoring API")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], allow_methods=["*"], allow_headers=["*"],
+    allow_origins=["*"],            # in production, lock this down to your domain
+    allow_credentials=True,
+    allow_methods=["*"],            # includes OPTIONS, POST, etc.
+    allow_headers=["*"],
 )
 
 @app.post("/score")
 def score_endpoint(req: In):
     return score_comment(req.text)
-
-if __name__ == "__main__":
-    import os, uvicorn
-    port = int(os.getenv("PORT", 8000))
-    uvicorn.run("app:app", host="0.0.0.0", port=port)
